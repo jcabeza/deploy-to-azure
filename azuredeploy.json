@@ -2,42 +2,32 @@
   "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "resourceGroupName": {
-      "type": "string",
-      "metadata": {
-        "description": "Nom du Resource Group à créer"
-      }
-    },
     "location": {
       "type": "string",
       "defaultValue": "westeurope",
       "metadata": {
         "description": "Région Azure"
       }
-    },
-    "storageAccountName": {
-      "type": "string",
-      "minLength": 3,
-      "maxLength": 24,
-      "metadata": {
-        "description": "Nom du Storage Account (unique globalement)"
-      }
     }
+  },
+  "variables": {
+    "resourceGroupName": "[concat('rg-storage-', uniqueString(subscription().subscriptionId))]",
+    "storageAccountName": "[toLower(concat('st', uniqueString(subscription().subscriptionId)))]"
   },
   "resources": [
     {
       "type": "Microsoft.Resources/resourceGroups",
       "apiVersion": "2022-09-01",
-      "name": "[parameters('resourceGroupName')]",
+      "name": "[variables('resourceGroupName')]",
       "location": "[parameters('location')]"
     },
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "storageDeployment",
-      "resourceGroup": "[parameters('resourceGroupName')]",
+      "resourceGroup": "[variables('resourceGroupName')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+        "[resourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -48,7 +38,7 @@
             {
               "type": "Microsoft.Storage/storageAccounts",
               "apiVersion": "2022-09-01",
-              "name": "[parameters('storageAccountName')]",
+              "name": "[variables('storageAccountName')]",
               "location": "[parameters('location')]",
               "sku": {
                 "name": "Standard_LRS"
@@ -64,5 +54,15 @@
         }
       }
     }
-  ]
+  ],
+  "outputs": {
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[variables('resourceGroupName')]"
+    },
+    "storageAccountName": {
+      "type": "string",
+      "value": "[variables('storageAccountName')]"
+    }
+  }
 }
